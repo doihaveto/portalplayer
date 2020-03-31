@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <link href="style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>The Portal Player</title>
+</head>
+<body>
+<div id="grid">
+    <div id="left-pane">
+        <div id="notes-pane"><div class="pane-content"></div></div>
+        <div id="transcript-pane">
+            <div class="pane-controls">
+                <i class="focus icon" style="display: none;"></i>
+            </div>
+            <div class="pane-content"></div>
+        </div>
+    </div>
+    <div id="resources-pane"><div class="pane-content"></div></div>
+    <div id="audio-player-pane">
+        <audio id="player" autostart="false" crossorigin="anonymous">
+            <track id="transcript" kind="captions" label="transcript" srclang="en" src="">
+        </audio>
+        <figure id="play"><button id="play-pause" class="play"></button></figure>
+        <div id="player-middle">
+            <span id="episode-title">Loading...</span>
+            <span id="player-time">00:00 / 00:00</span>
+            <progress id="progress-bar" value="0" max="1"></progress>
+        </div>
+        <div id="player-controls">
+            <div id="volume-control">
+                <i class="volume-icon on"></i>
+                <div id="volume-slider"></div>
+            </div>
+            <div id="speed-control">
+                <span class="speed-btn down">&ndash;</span>
+                <span id="speed">1</span><span>x</span>
+                <span class="speed-btn up">+</span>
+            </div>
+        </div>
+    </div>
+    <div id="episode-list">
+        <div class="pane-content">
+            <ul></ul>
+        </div>
+        <div class="close">&times;</div>
+    </div>
+    <div id="episode-list-open">List episodes</div>
+</div>
+<script src="player.js" type="text/javascript"></script>
+</body>
+</html>

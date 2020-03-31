@@ -1,0 +1,322 @@
+html, body {
+    margin: 0;
+    height: 100vh;
+}
+body {
+    overflow: hidden;
+    background: #262a2f;
+    font-family: 'Open Sans', sans-serif;
+    color: #d3d7da;
+}
+a:link, a:visited, a:hover, a:active {
+  color: #97afc1;
+}
+#grid {
+    position: relative;
+    overflow: hidden;
+    height: 100vh;
+}
+#left-pane {
+    overflow: auto;
+    position: relative;
+    float: left;
+    width: calc(50% - 0.5px);
+    height: calc(100vh - 70px);
+    border-right: 1px solid #000;
+}
+#notes-pane {
+    border-bottom: 1px solid #000;
+}
+#notes-pane, #transcript-pane {
+    height: calc(50% - 0.5px);
+    overflow: auto;
+    position: relative;
+}
+#resources-pane {
+    overflow: auto;
+    position: relative;
+    float: left;
+    height: calc(100vh - 70px);
+    width: calc(50% - 0.5px);
+}
+#notes-pane, #transcript-pane, #resources-pane, #episode-list {
+    scrollbar-color: #5c626b #262a2f;
+    scrollbar-width: thin;
+}
+#episode-list-open {
+    position: absolute;
+    bottom: 71px;
+    right: 0;
+    padding: 5px;
+    border-top: 1px solid #5c626b;
+    border-left: 1px solid #5c626b;
+    border-top-left-radius: 47%;
+    background: #3a4048;
+    cursor: pointer;
+    font-size: 15px;
+}
+#episode-list {
+    display: none;
+    width: 40%;
+    height: calc(100vh - 71px);
+    overflow: auto;
+    position: absolute;
+    border-right: 1px solid #000;
+    background: #262a2f;
+}
+#episode-list a {
+    text-decoration: none;
+    font-size: 14px;
+}
+#episode-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+#episode-list li {
+    margin-bottom: 7px;
+}
+.close {
+    position: fixed;
+    top: 10px;
+    left: calc(40% - 35px);
+    font-size: 20px;
+    cursor: pointer;
+}
+.pane-content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+#resources-pane .pane-content {
+    margin-bottom: 30px;
+}
+#audio-player-pane {
+    height: 50px;
+    width: calc(100vw - 20px);
+    position: absolute;
+    bottom: 0;
+    border-top: 1px solid #000;
+    padding: 10px;
+}
+#progress-bar {
+    appearance: none;
+    background-color: #5c626b;
+    color: #8997ac;
+    height: 8px;
+    vertical-align: middle;
+    width: 100%;
+    border: 0;
+}
+#progress-bar::-webkit-progress-value {
+    background: #8997ac;
+}
+#progress-bar::-moz-progress-bar {
+    background: #8997ac;
+}
+#progress-bar::-webkit-progress-bar {
+    background: #5c626b;
+}
+#play {
+    margin: 0;
+    display: inline-block;
+    overflow: hidden;
+}
+#play button {
+    width: 50px;
+    height: 50px;
+    background: #5c626b;
+    border: none;
+    border-radius: 100%;
+    margin: auto;
+}
+/* https://stackoverflow.com/questions/28639142/css-creating-a-play-button/28639751 */
+#play button.play::after {
+    content: '';
+    display: inline-block;
+    position: relative;
+    top: 1px;
+    left: 3px;
+    border-style: solid;
+    border-width: 10px 0 10px 20px;
+    border-color: transparent transparent transparent #262a2f;
+}
+#play button.pause::after {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 20px;
+    border-right: 4px solid #262a2f;
+    border-left: 4px solid #262a2f;
+    box-sizing: border-box;
+}
+#player-middle {
+    width: calc(100vw - 175px);
+    display: inline-block;
+    overflow: hidden;
+}
+#episode-title {
+    float: left;
+    overflow: hidden;
+    width: calc(100vw - 325px);
+    white-space: nowrap;
+}
+#player-time {
+    float: right;
+}
+#player-controls {
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 10px;
+}
+/* https://codepen.io/atesgoral/pen/RLPGaZ */
+.volume-icon {
+    vertical-align: middle;
+    box-sizing: border-box;
+    display: inline-block;
+    background: currentColor;
+    background-clip: content-box;
+    color: #8997ac;
+    width: 1em;
+    height: 1em;
+    border: .333em solid transparent;
+    border-right-color: currentColor;
+    position: relative;
+    left: -.337em;
+    zoom: 0.8;
+}
+.volume-icon.on:before, .volume-icon.on:after {
+    content: '';
+    background: currentColor;
+    width: .1em;
+    position: absolute;
+}
+.volume-icon.on:before {
+    height: .333em;
+    right: -.533em;
+}
+.volume-icon.on:after {
+    height: .667em;
+    right: -.733em;
+    top: -50%;
+}
+.volume-icon.off:before, .volume-icon.off:after {
+    content: '';
+    background: currentColor;
+    width: .1em;
+    position: absolute;
+    height: 1.2em;
+    margin-top: -.333em;
+    top: -.1em;
+    left: .1em;
+    transform: translateX(.333em) rotate(-45deg);
+}
+.volume-icon.off:before {
+    background: #04233D;
+    left: .2em;
+}
+#volume-slider {
+    display: inline-block;
+    position: relative;
+    height: 4px;
+    width: 60px;
+    background: #5c626b;
+    border-radius: 10px;
+    vertical-align: middle;
+}
+#volume-slider .ui-slider-range-min {
+    height: 100%;
+    position: absolute;
+    background: #8997ac;
+    border: none;
+    border-radius: 10px;
+    outline: none;
+}
+#speed-control {
+    width: 80px;
+    text-align: center;
+    border: 1px solid #888;
+    border-radius: 10px;
+}
+.speed-btn, #play, #play button {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
+}
+.speed-btn {
+    width: 20px;
+}
+.speed-btn.down {
+    border-right: 1px solid #888;
+    float: left;
+}
+.speed-btn.up {
+    float: right;
+    border-left: 1px solid #888;
+}
+#transcript-pane span.active {
+    background: #424f63;
+}
+#transcript-pane p, #notes-pane p, #resources-pane p {
+    margin: 7px 0 7px 0;
+}
+div::-webkit-scrollbar {
+    width: 10px;
+}
+div::-webkit-scrollbar-track {
+    background: #262a2f;
+}
+div::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: #5c626b;
+}
+div::-webkit-scrollbar-thumb:hover {
+    background: #b9c4d4;
+}
+div::-webkit-scrollbar-thumb:active {
+    background: #b9c4d4;
+}
+.pane-controls {
+    position: fixed;
+    top: calc(50vh - 30px);
+    left: calc(50% - 40px);
+}
+.focus.icon {
+    color: #d3d7da;
+    position: absolute;
+    margin-left: 2px;
+    margin-top: 2px;
+    width: 15px;
+    height: 15px;
+    border-radius: 1px;
+    border: solid 1px currentColor;
+    cursor: pointer;
+}
+.focus.icon:before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: -2px;
+    width: 9px;
+    height: 19px;
+    color: #262a2f;
+    background-color: currentColor;
+    -webkit-transform-origin: center;
+    transform-origin: center;
+}
+.focus.icon:after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: -2px;
+    width: 9px;
+    height: 19px;
+    color: #262a2f;
+    background-color: currentColor;
+    -webkit-transform-origin: center;
+    transform-origin: center;
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+}
