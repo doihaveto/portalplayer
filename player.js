@@ -9,7 +9,7 @@ var resources = [];
 var cur_volume = 1;
 var progress_hover = false;
 var transcript_paragraph_deadair = 0.2;
-var prev_active_cue;
+var prev_active_cue, prev_active_resource, prev_active_note;
 var scroll_counter = 0;
 var scroll_track = true;
 
@@ -50,7 +50,7 @@ function parse_wiki_html() {
             $('#notes-pane .pane-content').append($(resource));
         else
             return;
-        var timestamps = $(resource).data('timestamp').split(',').map(s => timestamp_to_seconds(s.split('-')[0]));
+        var timestamps = $(resource).data('timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds));
         resources.push({
             id: id,
             type: resource_type,
@@ -137,25 +137,40 @@ player.addEventListener('timeupdate', () => {
         return;
     progress_bar.value = player.currentTime / player.duration;
     $('#player-time').text(format_seconds(player.currentTime) + ' / ' + format_seconds(player.duration));
-    var showed_new = false;
+    var active_resources = [];
+    var last_active_note;
     resources.forEach(resource => {
-        var el = $(`#${resource.id}`);
-        var show = resource.timestamps.map(start => {
-            if (start <= player.currentTime)
+        var el = document.getElementById(resource.id);
+        var active_timestamps = resource.timestamps.map(range => {
+            let [start, end] = range;
+            if (start <= player.currentTime && (!end || end >= player.currentTime))
                 return start;
             return false;
-        }).filter(s => s);
-        if (!showed_new && show.length && el.is(':visible'))
-            showed_new = true;
-        if (show.length) {
-            el.show();
-            el.css('order', show[0]);
+        }).filter(s => s).sort().reverse();
+        if (active_timestamps.length) {
+            active_resources.push(el);
+            el.classList.add('active');
+            el.last_timestamp = active_timestamps[0];
         }
     });
-    if (showed_new) {
-        $('#notes-pane').scrollTop($('#notes-pane')[0].scrollHeight);
-        $('#resources-pane').scrollTop($('#resources-pane')[0].scrollHeight);
+    active_resources.sort((a, b) => a.last_timestamp - b.last_timestamp);
+    var last_active_resource = active_resources.filter(resource => $(resource).data('type') == 'resource').pop();
+    var last_active_note = active_resources.filter(resource => $(resource).data('type') == 'note').pop();
+    document.querySelectorAll('#resources-pane .active, #notes-pane .active').forEach(el => {
+        if (el != last_active_resource && el != last_active_note)
+            el.classList.remove('active')
+    });
+    if (last_active_resource && last_active_resource != prev_active_resource) {
+        $('#resources-pane').animate({
+            scrollTop: last_active_resource.offsetTop - (last_active_resource.offsetParent.offsetHeight / 2) + (last_active_resource.offsetHeight / 2)
+        }, 300);
     }
+    if (last_active_note && last_active_note != prev_active_note)
+        $('#notes-pane').animate({
+            scrollTop: last_active_note.offsetTop - (last_active_note.offsetParent.offsetHeight / 2) + (last_active_note.offsetHeight / 2)
+        }, 300);
+    prev_active_resource = last_active_resource;
+    prev_active_note = last_active_note;
     if (player.textTracks[0].mode == 'hidden') {
         var active_spans = [];
         var last_active_cue;

@@ -256,7 +256,7 @@ a:link, a:visited, a:hover, a:active {
     float: right;
     border-left: 1px solid #888;
 }
-#transcript-pane span.active {
+.active {
     background: #424f63;
 }
 #transcript-pane p, #notes-pane p, #resources-pane p {
