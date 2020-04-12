@@ -1,9 +1,16 @@
+/* todo
+make resource links open in new window
+*/
 var base_url = 'https://theportal.wiki'
 var player = document.getElementById('player');
+var video_player = new Plyr('#video-player', {controls: []});
+var active_player = player;
 var track = document.getElementById('transcript');
 var progress_bar = document.getElementById('progress-bar');
 var url = new URL(window.location.href);
 var episode_title = url.searchParams.get('ep');
+var force_audio = url.searchParams.get('force_audio');
+var force_video = url.searchParams.get('force_video');
 var wiki_html = '';
 var resources = [];
 var cur_volume = 1;
@@ -12,7 +19,6 @@ var transcript_paragraph_deadair = 0.2;
 var prev_active_cue, prev_active_resource, prev_active_note;
 var scroll_counter = 0;
 var scroll_track = true;
-
 var voice_span_regex = /\<v ([^\>]+)\>/g;
 
 function format_seconds(s) {
@@ -28,12 +34,36 @@ function timestamp_to_seconds(s) {
 }
 
 function parse_wiki_html() {
-    player.src = wiki_html.find('a[href$=".mp3"]').attr('href');
-    var track_src = wiki_html.find('a[href$=".vtt"]');
-    if (track_src.length) {
+    var track_source = 'audio';
+    var track_url = wiki_html.find('a[href$=".vtt"]');
+    if (track_url.length) {
         track.onload = load_transcript;
-        track.src = track_src.attr('href');
+        track.src = track_url.attr('href');
         player.textTracks[0].mode = 'hidden';
+        if (track.src.toLowerCase().includes('video') || track.src.toLowerCase().includes('youtube'))
+            track_source = 'youtube';
+    }
+    var youtube_a = wiki_html.find('a[href*="youtube.com"]');
+    var youtube_url_valid = youtube_a.length && youtube_a.text().toLowerCase().includes('watch episode');
+    if (!force_audio && (!track_url.length || track_source == 'youtube' || force_video) && youtube_url_valid) {
+        var youtube_url = new URL(youtube_a.attr('href'));
+        video_player.source = {
+            type: 'video',
+            sources: [{src: youtube_url.searchParams.get('v'), provider: 'youtube'}],
+        };
+        active_player = video_player;
+        $('#right-pane').addClass('split');
+        $('#video-pane').show();
+        video_player.on('ready', add_event_listeners);
+        $('#change-source-audio').show();
+        $('#episode-list-open').addClass('can-change-source');
+    } else {
+        player.src = wiki_html.find('a[href$=".mp3"]').attr('href');
+        add_event_listeners();
+        if (youtube_url_valid) {
+            $('#change-source-video').show();
+            $('#episode-list-open').addClass('can-change-source');
+        }
     }
     wiki_html.find('[href^="/"], [src^="/"]').each(function() {
         if ('href' in this.attributes && this.attributes.href.value.substr(0, 1) == '/')
@@ -64,17 +94,15 @@ function parse_wiki_html() {
 function parse_episode_list(response) {
     var eplist_html = $(response.parse.text['*']);
     var ul = document.querySelector('#episode-list .pane-content ul');
-    eplist_html.find('td a[href][title]').each(function() {
+    eplist_html.find('.episodes-table tr td:last-child a[href][title]').each(function() {
         var title = this.attributes.title.value;
-        if (title.indexOf(':') && !isNaN(parseInt(title.split(':')[0]))) {
-            var url = window.location.pathname + '?ep=' + this.attributes.href.value.replace('/wiki/', '');
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.href = url;
-            a.text = title;
-            li.appendChild(a);
-            ul.appendChild(li);
-        }
+        var url = window.location.pathname + '?ep=' + this.attributes.href.value.replace('/wiki/', '');
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = url;
+        a.text = title;
+        li.appendChild(a);
+        ul.appendChild(li);
     });
 }
 
@@ -117,33 +145,33 @@ function load_transcript() {
 }
 
 $('#play').on('click', function() {
-    if (isNaN(player.duration))
+    if (isNaN(active_player.duration))
         return;
-    if (player.paused) {
-        player.play();
+    if (active_player.paused) {
+        active_player.play();
         $('#play-pause').removeClass('play').addClass('pause');
     } else {
-        player.pause();
+        active_player.pause();
         $('#play-pause').removeClass('pause').addClass('play');
     }
 });
 
-player.addEventListener('canplay', () => {
-    $('#player-time').text(format_seconds(player.currentTime) + ' / ' + format_seconds(player.duration));
-});
+function player_can_play() {
+    $('#player-time').text(format_seconds(active_player.currentTime) + ' / ' + format_seconds(active_player.duration));
+}
 
-player.addEventListener('timeupdate', () => {
-    if (isNaN(player.duration) || progress_hover)
+function player_timeupdate() {
+    if (isNaN(active_player.duration) || progress_hover)
         return;
-    progress_bar.value = player.currentTime / player.duration;
-    $('#player-time').text(format_seconds(player.currentTime) + ' / ' + format_seconds(player.duration));
+    progress_bar.value = active_player.currentTime / active_player.duration;
+    $('#player-time').text(format_seconds(active_player.currentTime) + ' / ' + format_seconds(active_player.duration));
     var active_resources = [];
     var last_active_note;
     resources.forEach(resource => {
         var el = document.getElementById(resource.id);
         var active_timestamps = resource.timestamps.map(range => {
             let [start, end] = range;
-            if (start <= player.currentTime && (!end || end >= player.currentTime))
+            if (start <= active_player.currentTime && (!end || end >= active_player.currentTime))
                 return start;
             return false;
         }).filter(s => s).sort().reverse();
@@ -174,10 +202,12 @@ player.addEventListener('timeupdate', () => {
     if (player.textTracks[0].mode == 'hidden') {
         var active_spans = [];
         var last_active_cue;
-        [... player.textTracks[0].activeCues].forEach(cue => {
-            cue.transcript_span.classList.add('active');
-            active_spans.push(cue.transcript_span);
-            last_active_cue = cue.transcript_span;
+        [... player.textTracks[0].cues].forEach(cue => {
+            if (cue.startTime <= active_player.currentTime && cue.endTime >= active_player.currentTime) {
+                cue.transcript_span.classList.add('active');
+                active_spans.push(cue.transcript_span);
+                last_active_cue = cue.transcript_span;
+            }
         });
         document.querySelectorAll('#transcript-pane span.active').forEach(span => {
             if (active_spans.indexOf(span) == -1)
@@ -191,47 +221,57 @@ player.addEventListener('timeupdate', () => {
         }
         prev_active_cue = last_active_cue;
     }
-});
+}
+function add_event_listeners() {
+    var events_el = player;
+    if (active_player != player)
+        events_el = video_player.media;
+    events_el.addEventListener('canplay', player_can_play);
+    events_el.addEventListener('timeupdate', player_timeupdate);
+}
 
 $('#progress-bar').click(function(e) {
-    if (isNaN(player.duration))
+    if (isNaN(active_player.duration))
         return;
     var percent = e.offsetX / this.offsetWidth;
-    player.currentTime = percent * player.duration;
+    active_player.currentTime = percent * active_player.duration;
     progress_bar.value = percent / 100;
 }).mousemove(function(e) {
-    if (isNaN(player.duration))
+    if (isNaN(active_player.duration))
         return;
     progress_hover = true;
     var percent = e.offsetX / this.offsetWidth;
-    $('#player-time').text(format_seconds(percent * player.duration) + ' / ' + format_seconds(player.duration));
+    $('#player-time').text(format_seconds(percent * active_player.duration) + ' / ' + format_seconds(active_player.duration));
     progress_bar.value = percent;
 }).mouseout(function() {
     progress_hover = false;
-    $(player).trigger('timeupdate');
+    player_timeupdate();
 });
 
 $('.speed-btn').click(function(e) {
     e.preventDefault();
     var speed = parseFloat($('#speed').text());
     if ($(this).hasClass('up'))
-        speed += 0.1;
+        speed += 0.25;
     else
-        speed -= 0.1;
-    speed = Math.round( speed * 10 ) / 10;
-    player.playbackRate = speed;
+        speed -= 0.25;
+    speed = Math.round( speed * 100 ) / 100;
+    if (active_player == player)
+        active_player.playbackRate = speed;
+    else
+        active_player.speed = speed;
     $('#speed').text(speed);
 });
 
 $('.volume-icon').click(function() {
     if ($(this).hasClass('on')) {
-        player.volume = 0;
+        active_player.volume = 0;
         $(this).removeClass('on').addClass('off');
         $('#volume-slider').slider('value', 0);
     } else {
-        player.volume = cur_volume;
+        active_player.volume = cur_volume;
         $(this).removeClass('off').addClass('on');
-        $('#volume-slider').slider('value', player.volume * 100);
+        $('#volume-slider').slider('value', active_player.volume * 100);
     }
 })
 
@@ -242,7 +282,7 @@ $('#volume-slider').slider({
     range: 'min',
     slide: function(e, ui) {
         let v = ui.value / 100;
-        player.volume = v;
+        active_player.volume = v;
         cur_volume = v;
     }
 });
@@ -261,7 +301,7 @@ $('#transcript-pane .focus').click(function() {
     scroll_track = true;
     $('#transcript-pane .focus').hide();
     prev_active_cue = null;
-    $(player).trigger('timeupdate');
+    player_timeupdate();
 });
 
 $('#episode-list-open').click(function() {
@@ -270,6 +310,18 @@ $('#episode-list-open').click(function() {
 
 $('#episode-list .close').click(function() {
     $('#episode-list').hide();
+});
+
+$('#change-source-audio').click(function() {
+    url.searchParams.delete('force_video');
+    url.searchParams.set('force_audio', '1');
+    window.location.href = url.href;
+});
+
+$('#change-source-video').click(function() {
+    url.searchParams.delete('force_audio');
+    url.searchParams.set('force_video', '1');
+    window.location.href = url.href;
 });
 
 if (episode_title) {
@@ -290,6 +342,10 @@ if (episode_title) {
             parse_wiki_html();
         }
     });
+} else {
+    $('.welcome-text').show();
+    $('#episode-title').text('Welcome to the portal player');
+    $('#episode-list').show();
 }
 
 $.ajax({

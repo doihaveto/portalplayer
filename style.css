@@ -32,21 +32,45 @@ a:link, a:visited, a:hover, a:active {
     overflow: auto;
     position: relative;
 }
-#resources-pane {
+#right-pane {
     overflow: auto;
     position: relative;
     float: left;
     height: calc(100vh - 70px);
     width: calc(50% - 0.5px);
 }
-#notes-pane, #transcript-pane, #resources-pane, #episode-list {
+#right-pane.split > div {
+    overflow: auto;
+    position: relative;
+}
+#right-pane.split #resources-pane {
+    height: calc(100% - 360px);
+    border-bottom: 1px solid #000;
+}
+#right-pane.split #video-pane {
+    height: 360px;
+}
+#video-pane .pane-content {
+    padding: 0;
+}
+#notes-pane, #transcript-pane, #resources-pane, #video-pane, #episode-list {
     scrollbar-color: #5c626b #262a2f;
     scrollbar-width: thin;
 }
 #episode-list-open {
-    position: absolute;
     bottom: 71px;
     right: 0;
+}
+.change-source {
+    bottom: 71px;
+    right: 0;
+}
+#add-annotations-link {
+    top: calc(50vh - 67px);
+    left: calc(50% - 176px);
+}
+#episode-list-open, .change-source, #add-annotations-link {
+    position: absolute;
     padding: 5px;
     border-top: 1px solid #5c626b;
     border-left: 1px solid #5c626b;
@@ -54,6 +78,9 @@ a:link, a:visited, a:hover, a:active {
     background: #3a4048;
     cursor: pointer;
     font-size: 15px;
+}
+#episode-list-open.can-change-source {
+    bottom: 99px;
 }
 #episode-list {
     display: none;
@@ -63,6 +90,7 @@ a:link, a:visited, a:hover, a:active {
     position: absolute;
     border-right: 1px solid #000;
     background: #262a2f;
+    z-index: 1;
 }
 #episode-list a {
     text-decoration: none;
@@ -98,6 +126,10 @@ a:link, a:visited, a:hover, a:active {
     bottom: 0;
     border-top: 1px solid #000;
     padding: 10px;
+}
+.welcome-text {
+    color: #363e44;
+    font-size: 75px;
 }
 #progress-bar {
     appearance: none;
@@ -235,6 +267,7 @@ a:link, a:visited, a:hover, a:active {
 #speed-control {
     width: 80px;
     text-align: center;
+    font-size: 14px;
     border: 1px solid #888;
     border-radius: 10px;
 }
@@ -319,4 +352,7 @@ div::-webkit-scrollbar-thumb:active {
     transform-origin: center;
     -webkit-transform: rotate(90deg);
     transform: rotate(90deg);
+}
+.plyr__video-embed.plyr__video-wrapper {
+    padding-bottom: 0 !important;
 }

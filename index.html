@@ -3,26 +3,49 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://player.theportal.dev/">
+    <meta property="og:title" content="The Portal Player">
+    <meta property="og:description" content="A player for the Portal podcast with annotations and transcript">
+    <meta property="og:image" content="https://player.theportal.dev/ogimage.png">
     <link href="style.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js" type="text/javascript"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://unpkg.com/plyr@3"></script>
     <title>The Portal Player</title>
 </head>
 <body>
 <div id="grid">
     <div id="left-pane">
-        <div id="notes-pane"><div class="pane-content"></div></div>
+        <div id="notes-pane">
+            <div class="pane-content">
+                <h1 class="welcome-text" style="display: none;">Notes</h1>
+            </div>
+        </div>
         <div id="transcript-pane">
             <div class="pane-controls">
                 <i class="focus icon" style="display: none;"></i>
             </div>
-            <div class="pane-content"></div>
+            <div class="pane-content">
+                <h1 class="welcome-text" style="display: none;">Transcript</h1>
+            </div>
         </div>
     </div>
-    <div id="resources-pane"><div class="pane-content"></div></div>
+    <div id="right-pane">
+        <div id="resources-pane">
+            <div class="pane-content">
+                <h1 class="welcome-text" style="display: none;">Resources</h1>
+            </div>
+        </div>
+        <div id="video-pane" style="display: none;">
+            <div class="pane-content">
+                <video id="video-player"></video>
+            </div>
+        </div>
+    </div>
     <div id="audio-player-pane">
         <audio id="player" autostart="false" crossorigin="anonymous">
             <track id="transcript" kind="captions" label="transcript" srclang="en" src="">
@@ -52,6 +75,9 @@
         <div class="close">&times;</div>
     </div>
     <div id="episode-list-open">List episodes</div>
+    <div id="change-source-audio" class="change-source" style="display: none;">Switch to audio-only</div>
+    <div id="change-source-video" class="change-source" style="display: none;">Switch to video</div>
+    <div id="add-annotations-link"><a href="https://theportal.wiki/wiki/Annotating_episodes" target="_blank">Add or edit annotations</a></div>
 </div>
 <script src="player.js" type="text/javascript"></script>
 </body>
