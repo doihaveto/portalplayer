@@ -1,6 +1,3 @@
-/* todo
-make resource links open in new window
-*/
 var base_url = 'https://theportal.wiki'
 var player = document.getElementById('player');
 var video_player = new Plyr('#video-player', {controls: []});
@@ -74,12 +71,14 @@ function parse_wiki_html() {
     wiki_html.find('div[data-timestamp').each(function(i, resource) {
         var id = 'resource-' + i;
         var resource_type = $(resource).data('type');
-        if (resource_type == 'resource')
+        if (resource_type == 'resource') {
+            $(resource).find('[href]').attr('target', '_blank');
             $('#resources-pane .pane-content').append($(resource));
-        else if (resource_type == 'note')
+        } else if (resource_type == 'note') {
             $('#notes-pane .pane-content').append($(resource));
-        else
+        } else {
             return;
+        }
         var timestamps = $(resource).data('timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds));
         resources.push({
             id: id,
