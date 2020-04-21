@@ -119,7 +119,8 @@ function load_transcript() {
             }
         }
         cue.clean_text = cue.text.replace(voice_span_regex, '$1: ');
-        if (prev_time && ((cue.startTime - prev_time >= transcript_paragraph_deadair && ['.', '?'].indexOf(cue.clean_text.trim().substr(-1)) != -1) || (prev_speaker && cur_speaker != prev_speaker))) {
+        var first_letter = cue.clean_text.substr(0, 1);
+        if (prev_time && ((cue.startTime - prev_time >= transcript_paragraph_deadair && ['.', '?'].indexOf(cue.clean_text.trim().substr(-1)) != -1 && first_letter == first_letter.toUpperCase()) || (prev_speaker && cur_speaker != prev_speaker))) {
             parahraphs.push(parahraph);
             parahraph = [];
         }
