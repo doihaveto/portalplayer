@@ -62,32 +62,25 @@ function parse_wiki_html() {
             $('#episode-list-open').addClass('can-change-source');
         }
     }
-    wiki_html.find('[href^="/"], [src^="/"]').each(function() {
-        if ('href' in this.attributes && this.attributes.href.value.substr(0, 1) == '/')
-            this.attributes.href.value = base_url + this.attributes.href.value;
-        if ('src' in this.attributes && this.attributes.src.value.substr(0, 1) == '/')
-            this.attributes.src.value = base_url + this.attributes.src.value;
-    });
-    wiki_html.find('div[data-timestamp').each(function(i, resource) {
-        var id = 'resource-' + i;
-        var resource_type = $(resource).data('type');
-        if (resource_type == 'resource') {
-            $(resource).find('[href]').attr('target', '_blank');
-            $('#resources-pane .pane-content').append($(resource));
-        } else if (resource_type == 'note') {
-            $('#notes-pane .pane-content').append($(resource));
-        } else {
-            return;
+    let { location: { origin } } = window
+    Array.from(wiki_html[0].querySelectorAll('[href^="/"], [src^="/"]'))
+        .map(x => x[x.src ? 'src' : 'href'] = x[x.src ? 'src' : 'href'].replace(origin, base_url))
+    let parseResources = (el, i) => {
+        let id = 'resource-' + i
+        let resource_type = el.getAttribute('data-type')
+        if (resource_type === 'resource' || resource_type === 'note') {
+            Array.from(el.querySelectorAll('[href]')).map(x => x.target = '_blank')
+            let addTo = resource_type === 'note' ? '#notes-pane' : '#resources-pane'
+            document.querySelector(addTo + ' .pane-content').appendChild(el)
         }
-        var timestamps = $(resource).data('timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds));
-        resources.push({
-            id: id,
-            type: resource_type,
-            timestamps: timestamps,
-        });
-        if (timestamps.length)
-            $(resource).attr('id', id).css('order', timestamps[0]);
-    });
+        let timestamps = el.getAttribute('data-timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds))
+        resources.push({id: id, type: resource_type, timestamps: timestamps})
+        if (timestamps.length) {
+            el.id = id
+            el.style.order = timestamps[0]
+        }
+    }
+    Array.from(wiki_html[0].querySelectorAll('div[data-type], div[data-timestamp]')).map(parseResources)
 }
 
 function parse_episode_list(response) {
