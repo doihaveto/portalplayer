@@ -62,25 +62,25 @@ function parse_wiki_html() {
             $('#episode-list-open').addClass('can-change-source');
         }
     }
-    let { location: { origin } } = window
+    let origin = window.location.origin;
     Array.from(wiki_html[0].querySelectorAll('[href^="/"], [src^="/"]'))
-        .map(x => x[x.src ? 'src' : 'href'] = x[x.src ? 'src' : 'href'].replace(origin, base_url))
-    let parseResources = (el, i) => {
-        let id = 'resource-' + i
-        let resource_type = el.getAttribute('data-type')
+        .map(x => x[x.src ? 'src' : 'href'] = x[x.src ? 'src' : 'href'].replace(origin, base_url));
+    let parse_resources = (el, i) => {
+        let id = 'resource-' + i;
+        let resource_type = el.getAttribute('data-type');
         if (resource_type === 'resource' || resource_type === 'note') {
-            Array.from(el.querySelectorAll('[href]')).map(x => x.target = '_blank')
-            let addTo = resource_type === 'note' ? '#notes-pane' : '#resources-pane'
-            document.querySelector(addTo + ' .pane-content').appendChild(el)
+            Array.from(el.querySelectorAll('[href]')).map(x => x.target = '_blank');
+            let add_to = resource_type === 'note' ? '#notes-pane' : '#resources-pane';
+            document.querySelector(add_to + ' .pane-content').appendChild(el);
         }
-        let timestamps = el.getAttribute('data-timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds))
-        resources.push({id: id, type: resource_type, timestamps: timestamps})
+        let timestamps = el.getAttribute('data-timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds));
+        resources.push({id: id, type: resource_type, timestamps: timestamps});
         if (timestamps.length) {
-            el.id = id
-            el.style.order = timestamps[0]
+            el.id = id;
+            el.style.order = timestamps[0];
         }
     }
-    Array.from(wiki_html[0].querySelectorAll('div[data-type], div[data-timestamp]')).map(parseResources)
+    Array.from(wiki_html[0].querySelectorAll('div[data-type], div[data-timestamp]')).map(parse_resources);
 }
 
 function parse_episode_list(response) {
