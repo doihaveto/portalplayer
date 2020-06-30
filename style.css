@@ -39,6 +39,10 @@ a:link, a:visited, a:hover, a:active {
     height: calc(100vh - 70px);
     width: calc(50% - 0.5px);
 }
+#right-pane img {
+  background-size: contain;
+  max-width: 100%;
+}
 #right-pane.split > div {
     overflow: auto;
     position: relative;
