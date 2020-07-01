@@ -16,7 +16,7 @@ var transcript_paragraph_deadair = 0.2;
 var prev_active_cue, prev_active_resource, prev_active_note;
 var scroll_counter = 0;
 var scroll_track = true;
-var voice_span_regex = /\<v ([^\>]+)\>/g;
+var voice_span_regex = /<v ([^>]+)>/g;
 
 function format_seconds(s) {
     var t = new Date(s * 1000).toISOString().substr(11, 8);
@@ -68,12 +68,15 @@ function parse_wiki_html() {
     let parse_resources = (el, i) => {
         let id = 'resource-' + i;
         let resource_type = el.getAttribute('data-type');
-        if (resource_type === 'resource' || resource_type === 'note') {
+        let is_resource = resource_type.indexOf('resource') !== -1;
+        let is_note = resource_type.indexOf('note') !== -1;
+        if (is_resource || is_note) {
             Array.from(el.querySelectorAll('[href]')).map(x => x.target = '_blank');
-            let add_to = resource_type === 'note' ? '#notes-pane' : '#resources-pane';
+            let add_to = is_note ? '#notes-pane' : '#resources-pane';
             document.querySelector(add_to + ' .pane-content').appendChild(el);
         }
-        let timestamps = el.getAttribute('data-timestamp').split(',').map(s => s.split('-').map(timestamp_to_seconds));
+        let timestamp_attr = el.getAttribute('data-timestamp') || '';
+        let timestamps = timestamp_attr.split(',').map(s => s.split('-').map(timestamp_to_seconds));
         resources.push({id: id, type: resource_type, timestamps: timestamps});
         if (timestamps.length) {
             el.id = id;
@@ -103,33 +106,42 @@ function load_transcript() {
     var parahraph = [];
     var prev_time = 0;
     var prev_speaker, cur_speaker;
+    let non_vtt_speaker_regex = /^([A-Z].+ [A-Z].+:)/g;
     [... player.textTracks[0].cues].forEach(cue => {
-        var voice_span_matches = voice_span_regex.exec(cue.text);
+        var voice_span_matches = new RegExp(voice_span_regex).exec(cue.text);
         if (voice_span_matches) {
             cur_speaker = voice_span_matches[1];
-            if (cur_speaker == prev_speaker) {
-                cue.text = cue.text.replace(voice_span_regex, '');
+            let same_speaker = cur_speaker === prev_speaker;
+            cue.text = cue.text.replace(voice_span_regex, same_speaker ? '' : '$1: ');
+        } else {
+            let non_vtt_speaker = new RegExp(non_vtt_speaker_regex).exec(cue.text);
+            if (non_vtt_speaker) {
+                cur_speaker = non_vtt_speaker[1];
             }
         }
-        cue.clean_text = cue.text.replace(voice_span_regex, '$1: ');
-        var first_letter = cue.clean_text.substr(0, 1);
-        if (prev_time && ((cue.startTime - prev_time >= transcript_paragraph_deadair && ['.', '?'].indexOf(cue.clean_text.trim().substr(-1)) != -1 && first_letter == first_letter.toUpperCase()) || (prev_speaker && cur_speaker != prev_speaker))) {
+        var first_letter = cue.text.substr(0, 1);
+        var ends_in_punctuation = ['.', '?'].indexOf(cue.text.trim().substr(-1)) !== -1;
+        let first_letter_is_capital = first_letter === first_letter.toUpperCase();
+        let diff_speaker = prev_speaker && cur_speaker !== prev_speaker;
+        if (prev_time && ((cue.startTime - prev_time >= transcript_paragraph_deadair && ends_in_punctuation != -1 && first_letter_is_capital) || diff_speaker)) {
             parahraphs.push(parahraph);
             parahraph = [];
         }
         parahraph.push(cue);
         prev_time = cue.endTime;
-        if (cur_speaker)
+        if (cur_speaker) {
             prev_speaker = cur_speaker;
+        }
     });
-    if (parahraph.length)
+    if (parahraph.length) {
         parahraphs.push(parahraph);
+    }
     var transcript_el = document.querySelector('#transcript-pane .pane-content');
     parahraphs.forEach(paragraph => {
         var p = document.createElement('p');
         paragraph.forEach(cue => {
             var span = document.createElement('span');
-            span.textContent = cue.clean_text + ' ';
+            span.textContent = cue.text + ' ';
             cue.transcript_span = span;
             p.appendChild(span);
         });
