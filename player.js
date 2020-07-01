@@ -107,30 +107,35 @@ function load_transcript() {
     var prev_time = 0;
     var prev_speaker, cur_speaker;
     let non_vtt_speaker_regex = /^([A-Z].+ [A-Z].+:)/g;
-    [...player.textTracks[0].cues].forEach(cue => {
-        let { startTime, endTime } = cue
+    [... player.textTracks[0].cues].forEach(cue => {
         var voice_span_matches = new RegExp(voice_span_regex).exec(cue.text);
         if (voice_span_matches) {
             cur_speaker = voice_span_matches[1];
-            let same_speaker = cur_speaker === prev_speaker
+            let same_speaker = cur_speaker === prev_speaker;
             cue.text = cue.text.replace(voice_span_regex, same_speaker ? '' : '$1: ');
         } else {
             let non_vtt_speaker = new RegExp(non_vtt_speaker_regex).exec(cue.text);
-            if (non_vtt_speaker) cur_speaker = non_vtt_speaker[1];
+            if (non_vtt_speaker) {
+                cur_speaker = non_vtt_speaker[1];
+            }
         }
         var first_letter = cue.text.substr(0, 1);
         var ends_in_punctuation = ['.', '?'].indexOf(cue.text.trim().substr(-1)) !== -1;
         let first_letter_is_capital = first_letter === first_letter.toUpperCase();
         let diff_speaker = prev_speaker && cur_speaker !== prev_speaker;
-        if (prev_time && ((startTime - prev_time >= transcript_paragraph_deadair && ends_in_punctuation != -1 && first_letter_is_capital) || diff_speaker)) {
+        if (prev_time && ((cue.startTime - prev_time >= transcript_paragraph_deadair && ends_in_punctuation != -1 && first_letter_is_capital) || diff_speaker)) {
             parahraphs.push(parahraph);
             parahraph = [];
         }
         parahraph.push(cue);
-        prev_time = endTime;
-        if (cur_speaker) prev_speaker = cur_speaker;
+        prev_time = cue.endTime;
+        if (cur_speaker) {
+            prev_speaker = cur_speaker;
+        }
     });
-    if (parahraph.length) parahraphs.push(parahraph);
+    if (parahraph.length) {
+        parahraphs.push(parahraph);
+    }
     var transcript_el = document.querySelector('#transcript-pane .pane-content');
     parahraphs.forEach(paragraph => {
         var p = document.createElement('p');
@@ -202,7 +207,7 @@ function player_timeupdate() {
     if (player.textTracks[0].mode == 'hidden') {
         var active_spans = [];
         var last_active_cue;
-        [...player.textTracks[0].cues].forEach(cue => {
+        [... player.textTracks[0].cues].forEach(cue => {
             if (cue.startTime <= active_player.currentTime && cue.endTime >= active_player.currentTime) {
                 cue.transcript_span.classList.add('active');
                 active_spans.push(cue.transcript_span);
