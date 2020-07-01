@@ -113,7 +113,7 @@ function load_transcript() {
         if (voice_span_matches) {
             cur_speaker = voice_span_matches[1];
             let same_speaker = cur_speaker === prev_speaker
-            cue.text = cue.text.replace(voice_span_regex, same_speaker ? '' : '$1:')
+            cue.text = cue.text.replace(voice_span_regex, same_speaker ? '' : '$1: ');
         } else {
             let non_vtt_speaker = new RegExp(non_vtt_speaker_regex).exec(cue.text);
             if (non_vtt_speaker) cur_speaker = non_vtt_speaker[1];
